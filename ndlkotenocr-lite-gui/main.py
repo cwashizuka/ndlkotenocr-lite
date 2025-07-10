@@ -7,6 +7,7 @@ import numpy as np
 from PIL import Image
 sys.path.append(os.path.join(".","src"))
 import ocr
+from tools.ndlkoten2tei import convert_tei
 import xml.etree.ElementTree as ET
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -105,6 +106,7 @@ def main(page: ft.Page):
             outputtxtlist.clear()
             visualizepathlist.clear()
             visualizepathlist=[]
+            alljsonobjlist=[]
             for idx,inputpath in enumerate(inputpathlist):
                 #progressbar.semantics_label=inputpath
                 progressmessage.value=inputpath
@@ -184,6 +186,7 @@ def main(page: ft.Page):
                         "img_name":os.path.basename(inputpath)
                     }
                 }
+                alljsonobjlist.append(alljsonobj)
                 if chkbx_xml.value:
                     with open(os.path.join(outputpath,os.path.basename(inputpath).split(".")[0]+".xml"),"w",encoding="utf-8") as wf:
                         wf.write(allxmlstr)
@@ -209,6 +212,10 @@ def main(page: ft.Page):
                 page.update()
             progressmessage.value="{} 画像OCR完了 / 所要時間 {:.2f} 秒".format(allsum,time.time()-allstart)
             progressmessage.update()
+            if chkbx_tei.value:
+                with open(os.path.join(outputpath,os.path.basename(inputpathlist[0]).split(".")[0]+"_tei.xml"),"wb") as wf:
+                    allxmlstrtei=convert_tei(alljsonobjlist)
+                    wf.write(allxmlstrtei)
         except Exception as e:
             progressmessage.value=e
             progressmessage.update()
@@ -336,6 +343,7 @@ def main(page: ft.Page):
             "json":chkbx_json.value,
             "txt":chkbx_txt.value,
             "xml":chkbx_xml.value,
+            "tei":chkbx_tei.value,
             "pdf":chkbx_pdf.value,
             "pdf_viztxt":chkbx_pdf_viztxt.value,
         }
@@ -360,6 +368,7 @@ def main(page: ft.Page):
     chkbx_json = ft.Checkbox(label="JSON形式", value=True)
     chkbx_txt = ft.Checkbox(label="TXT形式", value=True)
     chkbx_xml = ft.Checkbox(label="XML形式", value=True)
+    chkbx_tei = ft.Checkbox(label="TEI形式", value=True)
     chkbx_pdf = ft.Checkbox(label="透明テキスト付PDF(ベータ)", value=False,on_change=change_pdfstatus)
     chkbx_pdf_viztxt = ft.Checkbox(label="PDFに青色で文字を重ねる", value=True)
     if os.path.exists("userconf.yaml"):
@@ -369,6 +378,8 @@ def main(page: ft.Page):
                 chkbx_json.value=config_obj["json"]
             if "xml" in config_obj:
                 chkbx_xml.value=config_obj["xml"]
+            if "tei" in config_obj:
+                chkbx_tei.value=config_obj["tei"]
             if "txt" in config_obj:
                 chkbx_txt.value=config_obj["txt"]
             if "pdf" in config_obj:
@@ -434,7 +445,7 @@ def main(page: ft.Page):
         actions=[
             chkbx_txt,
             chkbx_json,
-            chkbx_xml,
+            ft.Row([chkbx_xml,chkbx_tei]),
             ft.Row([chkbx_pdf,chkbx_pdf_viztxt]),
             ft.TextButton("OK", on_click=handle_dlg_modal_close),
         ],
