@@ -372,12 +372,12 @@ SOFTWARE.
 
 The Python Imaging Library (PIL) is
 
-    Copyright c 1997-2011 by Secret Labs AB
-    Copyright c 1995-2011 by Fredrik Lundh
+    Copyright © 1997-2011 by Secret Labs AB
+    Copyright © 1995-2011 by Fredrik Lundh
 
 Pillow is the friendly PIL fork. It is
 
-    Copyright c 2010-2022 by Alex Clark and contributors
+    Copyright © 2010-2022 by Alex Clark and contributors
 
 Like PIL, Pillow is licensed under the open source HPND License:
 
@@ -481,7 +481,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # PyYAML
 
-Copyright (c) 2017-2021 Ingy dot Net
+Copyright (c) 2017-2021 Ingy döt Net
 Copyright (c) 2006-2016 Kirill Simonov
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -964,9 +964,9 @@ Copyright 2018-2023 OpenMMLab. All rights reserved.
    See the License for the specific language governing permissions and
    limitations under the License.
 
-
 # ndlkoten2tei.py
- Apache License
+
+      Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
 
@@ -1154,7 +1154,7 @@ Copyright 2018-2023 OpenMMLab. All rights reserved.
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
-   Copyright [yyyy] [name of copyright owner]
+   Copyright 2025 Kiyonori Nagasaki
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
