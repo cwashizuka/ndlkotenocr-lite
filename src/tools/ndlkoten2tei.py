@@ -25,7 +25,7 @@ xmltemplate="""<?xml version="1.0" encoding="UTF-8"?>
          <titleStmt>
             <title>Title</title>
             <respStmt>
-               <resp>Auomated Transcription</resp>
+               <resp>Automated Transcription</resp>
                <name ref="https://github.com/ndl-lab/ndlkotenocr-lite">NDL古典籍OCR-Liteアプリケーション</name>
             </respStmt>
             <respStmt><resp>Conversion to TEI encoding</resp>
@@ -41,9 +41,6 @@ xmltemplate="""<?xml version="1.0" encoding="UTF-8"?>
       </fileDesc>
   </teiHeader>
    <facsimile>
-      <surface>
-
-      </surface>
    </facsimile>
   <text>
       <body>
