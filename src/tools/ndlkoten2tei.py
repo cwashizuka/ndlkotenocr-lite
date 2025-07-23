@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import xml.etree.ElementTree as ET
+import urllib.parse
 
 xmltemplate="""<?xml version="1.0" encoding="UTF-8"?>
 <?xml-model href="http://www.tei-c.org/release/xml/tei/custom/schema/relaxng/tei_all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
@@ -85,7 +86,7 @@ def convert_tei(ndl_jsons):
         el_surface = ET.SubElement(el_facsimile, 'surface')
         el_graphic = ET.SubElement(el_surface, 'graphic')
         image_path = page['imginfo']['img_path']
-        el_graphic.set('url', image_path)
+        el_graphic.set('url', image_path.replace(" ","%20"))
         el_graphic.set('width', str(page['imginfo']['img_width']) + 'px')
         el_graphic.set('height', str(page['imginfo']['img_height']) + 'px')
         lines_dict = {}
