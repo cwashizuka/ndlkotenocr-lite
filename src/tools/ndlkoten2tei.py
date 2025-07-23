@@ -41,9 +41,6 @@ xmltemplate="""<?xml version="1.0" encoding="UTF-8"?>
       </fileDesc>
   </teiHeader>
    <facsimile>
-      <surface>
-
-      </surface>
    </facsimile>
   <text>
       <body>
