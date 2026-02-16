@@ -17,6 +17,7 @@ import glob
 from reading_order.xy_cut.eval import eval_xml
 from ndl_parser import convert_to_xml_string3
 from reading_order.xy_cut.eval import eval_xml
+from tools.ndlkoten2tei import convert_tei
 
 def get_detector(args):
     weights_path = args.det_weights
@@ -85,6 +86,7 @@ def process(args):
     recognizer=get_recognizer(args=args)
     tatelinecnt=0
     alllinecnt=0
+    alljsonobjlist=[]
     for inputpath in inputpathlist:
         ext=inputpath.split(".")[-1]
         pil_image = Image.open(inputpath).convert('RGB')
@@ -150,23 +152,28 @@ def process(args):
         allxmlstr+="</OCRDATASET>"
         if tatelinecnt/alllinecnt>0.5:
             alltextlist=alltextlist[::-1]
+        
         with open(os.path.join(args.output,os.path.basename(inputpath).split(".")[0]+".xml"),"w",encoding="utf-8") as wf:
             wf.write(allxmlstr)
-        with open(os.path.join(args.output,os.path.basename(inputpath).split(".")[0]+".json"),"w",encoding="utf-8") as wf:
-            alljsonobj={
-                "contents":[resjsonarray],
-                "imginfo": {
-                    "img_width": img_w,
-                    "img_height": img_h,
-                    "img_path":inputpath,
-                    "img_name":os.path.basename(inputpath)
-                }
+        alljsonobj={
+            "contents":[resjsonarray],
+            "imginfo": {
+                "img_width": img_w,
+                "img_height": img_h,
+                "img_path":inputpath,
+                "img_name":os.path.basename(inputpath)
             }
-            alljsonstr=json.dumps(alljsonobj,ensure_ascii=False,indent=2)
+        }
+        alljsonobjlist.append(alljsonobj)
+        alljsonstr=json.dumps(alljsonobj,ensure_ascii=False,indent=2)
+        with open(os.path.join(args.output,os.path.basename(inputpath).split(".")[0]+".json"),"w",encoding="utf-8") as wf:
             wf.write(alljsonstr)
         with open(os.path.join(args.output,os.path.basename(inputpath).split(".")[0]+".txt"),"w",encoding="utf-8") as wtf:
             wtf.write("\n".join(alltextlist))
         #print("Total calculation time (Detection + Recognition):",time.time()-start)
+    with open(os.path.join(args.output,os.path.basename(inputpathlist[0]).split(".")[0]+"_tei.xml"),"wb") as wf:
+        allxmlstrtei=convert_tei(alljsonobjlist)
+        wf.write(allxmlstrtei)
 
 
 if __name__=="__main__":
