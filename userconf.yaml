@@ -1,0 +1,6 @@
+json: true
+pdf: false
+pdf_viztxt: false
+tei: false
+txt: true
+xml: true

@@ -30,6 +30,10 @@ PDFTMPPATH="4ab7ecc3-53fb-b3e7-64e8-a809b5a483d2"
 def main(page: ft.Page):
     page.title = "NDL古典籍OCR-Lite-GUI"
     page.window.icon=os.path.join("assets","icon.png")
+    page.scroll = ft.ScrollMode.AUTO
+    page.expand = True
+    page.window.width = 1400
+    page.window.height = 900
     inputpathlist=[]
     visualizepathlist=[]
     outputtxtlist=[]
@@ -51,7 +55,6 @@ def main(page: ft.Page):
         pilimg.save(pilimg_data, format='png')
         pilimg_data.seek(0)
         side_out = ImageReader(pilimg_data)
-        #Image.fromarray(new_image)
         c.drawImage(side_out,0,0)
         if viztxtflag:
             c.setFillColor(blue)
@@ -61,10 +64,11 @@ def main(page: ft.Page):
             bbox=bboxobj["boundingBox"]
             text=bboxobj["text"]
             x_center=(bbox[0][0]+bbox[2][0])//2
-            y_center=img.shape[0]-bbox[0][1]#(bbox[0][1]+bbox[1][1])//2
+            y_center=img.shape[0]-bbox[0][1]
             c.setFont('HeiseiMin-W3', abs(bbox[2][0]-bbox[0][0])*3//4)
             c.drawString(x_center,y_center, text)
         c.save()
+
     def parts_control(flag:bool):
         file_upload_btn.disabled=flag
         directory_upload_btn.disabled=flag
@@ -74,6 +78,9 @@ def main(page: ft.Page):
         preview_prev_btn.disabled=flag
         preview_next_btn.disabled=flag
         ocr_btn.disabled=flag
+        # ★追加：テキスト保存・結合ボタンも制御
+        save_text_btn.disabled=flag
+        merge_text_btn.disabled=flag
 
 
     def ocr_button_result(e):
@@ -108,7 +115,6 @@ def main(page: ft.Page):
             visualizepathlist=[]
             alljsonobjlist=[]
             for idx,inputpath in enumerate(inputpathlist):
-                #progressbar.semantics_label=inputpath
                 progressmessage.value=inputpath
                 progressmessage.update()
                 pil_image = Image.open(inputpath).convert('RGB')
@@ -127,7 +133,6 @@ def main(page: ft.Page):
                     img_h,img_w=img.shape[:2]
                     detections,classeslist=ocr.inference_on_detector(args=args,inputname=imgname,npimage=img,outputpath=outputpath,issaveimg=chkbx_visualize.value)
                     e1=time.time()
-                    #print("layout detection Done!",e1-start)
                     resultobj=[dict(),dict()]
                     resultobj[0][0]=list()
                     for i in range(16):
@@ -208,9 +213,9 @@ def main(page: ft.Page):
                     preview_image.src = visualizepathlist[preview_index]
                 else:
                     preview_image.src = inputpathlist[preview_index]
-                #preview_image.update()
+                update_dropdown()
                 page.update()
-            progressmessage.value="{} 画像OCR完了 / 所要時間 {:.2f} 秒".format(allsum,time.time()-allstart)
+            progressmessage.value="{} 画像OCR完了 / 処理時間: {:.2f} 秒".format(allsum,time.time()-allstart)
             progressmessage.update()
             if chkbx_tei.value:
                 with open(os.path.join(outputpath,os.path.basename(inputpathlist[0]).split(".")[0]+"_tei.xml"),"wb") as wf:
@@ -223,7 +228,7 @@ def main(page: ft.Page):
             parts_control(False)
             page.update()
 
-    
+
     def pick_files_result(e: ft.FilePickerResultEvent):
         if e.files:
             selected_input_path.value=e.files[0].path
@@ -233,7 +238,7 @@ def main(page: ft.Page):
             ext=e.files[0].path.split(".")[-1]
             if ext=="pdf":
                 filestem=os.path.basename(e.files[0].path)[:-4]
-                progressmessage.value="pdfファイルの前処理中…… {} ".format(e.files[0].path)
+                progressmessage.value="pdfファイルの前処理中… {} ".format(e.files[0].path)
                 parts_control(True)
                 page.update()
                 for p in glob.glob(os.path.join(os.getcwd(),PDFTMPPATH,"*.jpg")):
@@ -247,7 +252,7 @@ def main(page: ft.Page):
                     inputpathlist.append(outputtmppath)
                     image=image.convert("RGB")
                     image.save(outputtmppath)
-                progressmessage.value="pdfファイルの前処理完了"
+                progressmessage.value="pdfファイルの前処理の完了"
                 parts_control(False)
                 page.update()
             else:
@@ -274,7 +279,7 @@ def main(page: ft.Page):
                         ocr_btn.disabled=False
                 elif ext=="pdf" and os.path.isfile(inputpath):
                     filestem=os.path.basename(inputpath)[:-4]
-                    progressmessage.value="pdfファイルの前処理中…… {} ".format(inputpath)
+                    progressmessage.value="pdfファイルの前処理中… {} ".format(inputpath)
                     parts_control(True)
                     page.update()
                     if not cleanflag:
@@ -290,10 +295,9 @@ def main(page: ft.Page):
                         inputpathlist.append(outputtmppath)
                         image=image.convert("RGB")
                         image.save(outputtmppath)
-                    progressmessage.value="pdfファイルの前処理完了"
+                    progressmessage.value="pdfファイルの前処理の完了"
                     parts_control(False)
                     page.update()
-            #print(inputpath)
         selected_input_path.update()
         page.update()
 
@@ -319,7 +323,7 @@ def main(page: ft.Page):
         else:
             preview_image.src = inputpathlist[preview_index]
         preview_text.value=outputtxtlist[preview_index]
-        #preview_text.update()
+        page_dropdown.value = str(preview_index)
         page.update()
 
 
@@ -329,15 +333,106 @@ def main(page: ft.Page):
             preview_index -= 1
         else:
             preview_index = min(len(inputpathlist) - 1,len(outputtxtlist) - 1)
-        
+
         if len(visualizepathlist)>0:
             preview_image.src = visualizepathlist[preview_index]
         else:
             preview_image.src = inputpathlist[preview_index]
         preview_text.value=outputtxtlist[preview_index]
+        page_dropdown.value = str(preview_index)
         preview_text.update()
         page.update()
-    
+
+    # ★追加：プレビュー画面の編集内容をtxt・xml・jsonに保存する
+    def save_text(e):
+        nonlocal inputpathlist, outputtxtlist, preview_index
+        outputpath = selected_output_path.value
+        if not outputpath:
+            progressmessage.value = "出力先フォルダが選択されていません"
+            progressmessage.update()
+            return
+        if len(inputpathlist) == 0 or len(outputtxtlist) == 0:
+            progressmessage.value = "保存するテキストがありません"
+            progressmessage.update()
+            return
+        # 編集内容をoutputtxtlistにも反映
+        outputtxtlist[preview_index] = preview_text.value
+        filestem = os.path.basename(inputpathlist[preview_index]).rsplit(".", 1)[0]
+        saved = []
+
+        # TXTに保存
+        if chkbx_txt.value:
+            txt_path = os.path.join(outputpath, filestem + ".txt")
+            with open(txt_path, "w", encoding="utf-8") as wf:
+                wf.write(preview_text.value)
+            saved.append("txt")
+
+        # XMLに保存（STRING属性を編集テキストで更新）
+        if chkbx_xml.value:
+            xml_path = os.path.join(outputpath, filestem + ".xml")
+            if os.path.exists(xml_path):
+                try:
+                    tree = ET.parse(xml_path)
+                    root = tree.getroot()
+                    new_lines = preview_text.value.split("\n")
+                    line_elements = root.findall(".//LINE")
+                    for i, lineobj in enumerate(line_elements):
+                        if i < len(new_lines):
+                            lineobj.set("STRING", new_lines[i])
+                    ET.indent(root)
+                    tree.write(xml_path, encoding="unicode", xml_declaration=False)
+                    saved.append("xml")
+                except Exception:
+                    pass
+
+        # JSONに保存（textフィールドを編集テキストで更新）
+        if chkbx_json.value:
+            json_path = os.path.join(outputpath, filestem + ".json")
+            if os.path.exists(json_path):
+                try:
+                    with open(json_path, "r", encoding="utf-8") as rf:
+                        jsonobj = json.load(rf)
+                    new_lines = preview_text.value.split("\n")
+                    contents = jsonobj.get("contents", [[]])[0]
+                    for i, item in enumerate(contents):
+                        if i < len(new_lines):
+                            item["text"] = new_lines[i]
+                    with open(json_path, "w", encoding="utf-8") as wf:
+                        wf.write(json.dumps(jsonobj, ensure_ascii=False, indent=2))
+                    saved.append("json")
+                except Exception:
+                    pass
+
+        progressmessage.value = "保存しました: {} ({})".format(filestem, "・".join(saved))
+        progressmessage.update()
+        page.update()
+
+    # ★追加：出力フォルダ内の全txtを1ファイルに結合する
+    def merge_texts(e):
+        outputpath = selected_output_path.value
+        if not outputpath:
+            progressmessage.value = "出力先フォルダが選択されていません"
+            progressmessage.update()
+            return
+        txt_files = sorted(glob.glob(os.path.join(outputpath, "*.txt")))
+        # _merged.txt 自体は除外
+        txt_files = [f for f in txt_files if not os.path.basename(f).startswith("_merged")]
+        if not txt_files:
+            progressmessage.value = "結合するテキストファイルが見つかりません"
+            progressmessage.update()
+            return
+        merged_path = os.path.join(outputpath, "_merged.txt")
+        with open(merged_path, "w", encoding="utf-8") as outf:
+            for txt_file in txt_files:
+                basename = os.path.basename(txt_file)
+                outf.write("【{}】\n".format(basename))
+                with open(txt_file, "r", encoding="utf-8") as inf:
+                    outf.write(inf.read())
+                outf.write("\n\n")
+        progressmessage.value = "結合完了: _merged.txt ({} ファイル)".format(len(txt_files))
+        progressmessage.update()
+        page.update()
+
     def handle_dlg_modal_close(e):
         config_obj={
             "json":chkbx_json.value,
@@ -350,12 +445,23 @@ def main(page: ft.Page):
         with open('userconf.yaml','w')as wf:
             yaml.dump(config_obj, wf, default_flow_style=False, allow_unicode=True)
         page.close(dlg_modal)
-    
+
     def change_pdfstatus(e):
         chkbx_pdf_viztxt.disabled=not chkbx_pdf.value
         chkbx_pdf_viztxt.update()
-    preview_image=ft.Image(src="dummy.dat", width=400, height=300)
-    preview_text=ft.Text(value="",height=300,selectable=True)
+
+    preview_image=ft.Image(src="dummy.dat", fit=ft.ImageFit.CONTAIN, expand=True)
+
+    # ★変更：ft.Text → ft.TextField（編集可能なテキストエリア）
+    preview_text=ft.TextField(
+        value="",
+        multiline=True,
+        min_lines=10,
+        text_size=13,
+        border_color=ft.colors.BLUE_200,
+        hint_text="OCR結果がここに表示されます（直接編集できます）",
+        expand=True,
+    )
 
     pick_directory_dialog = ft.FilePicker(on_result=pick_directory_result)
     pick_output_dialog = ft.FilePicker(on_result=pick_output_result)
@@ -368,9 +474,9 @@ def main(page: ft.Page):
     chkbx_json = ft.Checkbox(label="JSON形式", value=True)
     chkbx_txt = ft.Checkbox(label="TXT形式", value=True)
     chkbx_xml = ft.Checkbox(label="XML形式", value=True)
-    chkbx_tei = ft.Checkbox(label="TEI形式", value=True)
-    chkbx_pdf = ft.Checkbox(label="透明テキスト付PDF(ベータ)", value=False,on_change=change_pdfstatus)
-    chkbx_pdf_viztxt = ft.Checkbox(label="PDFに青色で文字を重ねる", value=True)
+    chkbx_tei = ft.Checkbox(label="TEI形式", value=False)
+    chkbx_pdf = ft.Checkbox(label="透過テキスト付きPDF(ベータ)", value=False,on_change=change_pdfstatus)
+    chkbx_pdf_viztxt = ft.Checkbox(label="PDFに可視化でテキストを乗せる", value=True)
     if os.path.exists("userconf.yaml"):
         with open('userconf.yaml', encoding='utf-8')as f:
             config_obj= yaml.safe_load(f)
@@ -388,9 +494,6 @@ def main(page: ft.Page):
                 chkbx_pdf_viztxt.value=config_obj["pdf_viztxt"]
                 chkbx_pdf_viztxt.disabled=not chkbx_pdf.value
 
-
-
-    
     page.overlay.extend([pick_files_dialog,pick_directory_dialog,pick_output_dialog])
     file_upload_btn=ft.ElevatedButton(
                     "画像ファイルを処理する",
@@ -415,28 +518,65 @@ def main(page: ft.Page):
                                     shape=ft.RoundedRectangleBorder(radius=10)
                                     ),
                                  disabled=True)
-    preview_image_col = ft.Column(
-        controls=[preview_image],
-        width=400,
-        height=300,
-        expand=False
+
+    # ★追加：テキスト保存ボタン
+    save_text_btn = ft.ElevatedButton(
+        text="編集内容を保存",
+        icon=ft.icons.SAVE,
+        on_click=save_text,
+        disabled=True,
+        tooltip="表示中のテキストを編集してtxt・xml・jsonに保存できます",
     )
-    
+
+    # ★追加：全ページテキスト保存ボタン
+    merge_text_btn = ft.ElevatedButton(
+        text="全ページのテキストを保存",
+        icon=ft.icons.MERGE_TYPE,
+        on_click=merge_texts,
+        disabled=True,
+        tooltip="出力フォルダ内の全txtファイルを_merged.txtにまとめて保存します",
+    )
+
+    # 画像ページ選択プルダウン
+    page_dropdown = ft.Dropdown(
+        width=300,
+        options=[],
+        disabled=True,
+        on_change=lambda e: jump_to_page(e),
+    )
+
+    def jump_to_page(e):
+        nonlocal preview_index
+        if page_dropdown.value is not None:
+            preview_index = int(page_dropdown.value)
+            if len(visualizepathlist) > 0:
+                preview_image.src = visualizepathlist[preview_index]
+            else:
+                preview_image.src = inputpathlist[preview_index]
+            preview_text.value = outputtxtlist[preview_index]
+            page.update()
+
+    def update_dropdown():
+        page_dropdown.options = [
+            ft.dropdown.Option(key=str(i), text=os.path.basename(inputpathlist[i]))
+            for i in range(len(inputpathlist))
+        ]
+        if len(inputpathlist) > 0:
+            page_dropdown.value = "0"
+            page_dropdown.disabled = False
+        page_dropdown.update()
+
     preview_image_int=ft.InteractiveViewer(
-            min_scale=1,
+            min_scale=0.5,
             max_scale=10,
             boundary_margin=ft.margin.all(20),
-            content=preview_image_col,
+            content=preview_image,
+            expand=True,
+            clip_behavior=ft.ClipBehavior.HARD_EDGE,
     )
-    preview_text_col = ft.Column(
-        controls=[preview_text],
-        scroll=ft.ScrollMode.ALWAYS,
-        width=600,
-        height=300,
-        expand=False
-    )
-    preview_prev_btn=ft.ElevatedButton(text="前の画像", on_click=prev_image,disabled=True)
-    preview_next_btn=ft.ElevatedButton(text="次の画像", on_click=next_image,disabled=True)
+
+    preview_prev_btn=ft.ElevatedButton(text="< 前の画像", on_click=prev_image, disabled=True)
+    preview_next_btn=ft.ElevatedButton(text="次の画像 >", on_click=next_image, disabled=True)
     customize_btn=ft.ElevatedButton("出力形式の選択", on_click=lambda e: page.open(dlg_modal))
     dlg_modal = ft.AlertDialog(
         modal=True,
@@ -454,7 +594,7 @@ def main(page: ft.Page):
     page.add(
         ft.Row(
             [
-                ft.Text("処理対象と出力先を選択して「OCR」ボタンを押してください")
+                ft.Text("処理対象と出力先を選択して、「OCR」ボタンを押してください")
             ],
             ),
         ft.Divider(),
@@ -483,7 +623,53 @@ def main(page: ft.Page):
             ]
         ),
         ft.Divider(),
-        ft.Row([ft.Text("処理結果プレビュー"),preview_prev_btn,preview_next_btn]),
-        ft.Row([preview_image_int,preview_text_col])
+        # ★OCR結果タイトル（目立つように）
+        ft.Text("OCR結果", size=20, weight=ft.FontWeight.BOLD),
+        ft.Divider(),
+        # ★ページナビゲーション行
+        ft.Row([
+            preview_prev_btn,
+            ft.Text("画像を選択："),
+            page_dropdown,
+            preview_next_btn,
+        ]),
+        ft.Divider(),
+        # ★画像とテキストを横並びに配置
+        ft.Row(
+            controls=[
+                # 左：画像エリア
+                ft.Container(
+                    content=ft.InteractiveViewer(
+                        min_scale=0.5,
+                        max_scale=10,
+                        boundary_margin=ft.margin.all(20),
+                        content=preview_image,
+                        expand=True,
+                        clip_behavior=ft.ClipBehavior.HARD_EDGE,
+                    ),
+                    expand=3,
+                    height=700,
+                    border=ft.border.all(1, ft.colors.GREY_300),
+                    clip_behavior=ft.ClipBehavior.HARD_EDGE,
+                    padding=0,
+                ),
+                # 右：テキストエリア
+                ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            preview_text,
+                            ft.Row([save_text_btn, merge_text_btn]),
+                        ],
+                        scroll=ft.ScrollMode.ALWAYS,
+                    ),
+                    expand=1,
+                    height=700,
+                    border=ft.border.all(1, ft.colors.BLUE_200),
+                    padding=8,
+                ),
+            ],
+            expand=True,
+            vertical_alignment=ft.CrossAxisAlignment.START,
+        ),
     )
 ft.app(main)
